@@ -1,7 +1,7 @@
 %script gCaMP activity analysis.m
 %Author: KH.
 %Varshney Lab, OMRF, OKC, OK.
-
+clear all %Make sure not other scripts are running before execution of this script.
 %Load CSV data file of the gCaMP activity as measured in ImageJ.
 %Make sure each CSV file represents a sample and has its own folder for analysis.
 %define files to open.
@@ -27,19 +27,20 @@ pkg load signal
   t=t*tint
 %Assign file name string and identify image files.
 samplenum=num2str(n)
+theword=strcat('sample_', samplenum)
 [directory,name,ext]=fileparts(filename);
 ImageList=[(dir('*.png'));(dir('*.jpg'));(dir('*.bmp'));(dir('*.tif'))];
 %Establish contains function, since Octave do not have natural contains function.
 contains=@(Imagefiles, samplenum)~cellfun('isempty',strfind(Imagefiles, samplenum))
-Imagefiles={ImageList.name}
 %Search if the file directory have image files that partially match the sample number (search for png,jpg, bmp and tif files).
 if  isempty(fieldnames(ImageList))
-  result=0;
-else contains(Imagefiles, samplenum)
-result=contains(Imagefiles, samplenum)
-end
+  result=0; %means no image file
+else %means there are image files
+  Imagefiles={ImageList.name}
+  result=contains(Imagefiles, theword) %create 0 1 TF array for files that match the sample number.
+  end
 %Result plot for individual column
-if any(result) %if a result matrix from previous step is not a 0x1 empty struct, then question will pop up.
+if any(result) %if the result array from previous step is not full of zeros and no ones, then question will pop up.
   button=questdlg('A plot for this sample of this specimen has already been created. Do you still want to proceed and make a new one to overwrite the old one?','Warning!','Yes','No','No');
   if strcmp(button,'Yes')
     figure(1);
@@ -94,7 +95,7 @@ if isfile('whole sample activity imagesc plot.png')
     imagesc(activity_normalized)
     colorbar()
     saveas(figure(3),"whole sample activity imagesc plot.png")
-  elseif strcmp(button,'No'),return,end
+  elseif strcmp(button,'No'),end
 else
     figure(3)
     activity=medfilt1(init, 200)
@@ -105,3 +106,7 @@ else
     colorbar()
     saveas(figure(3),"whole sample activity imagesc plot.png")
   end
+Workspacename=strcat(name,'_sample_',samplenum,' variables.mat');
+  save(Workspacename);
+clear all
+close all
